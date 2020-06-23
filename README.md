@@ -102,6 +102,11 @@ To get started with the provided test inputs , run the following line of code
 python upscale.py --input_dir "test_inputs" --output_dir "test_outputs" --model "2D_Art_0.pkl" --scale_factor 4 --fp_16
 ```
 
+## Technical tidbits:
+* It uses the SR-Resnet model first shown in the Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network https://arxiv.org/abs/1609.04802 paper but combines it with feature loss described in Perceptual Losses for Real-Time Style Transfer and Super-Resolution https://arxiv.org/abs/1603.08155.
+* `twtygqyy`'s implementation of Srresnet https://github.com/twtygqyy/pytorch-SRResNet is modified to do 2x instead of 4x upscaling. For 4x upscaling the code simplay passes the same image through the model twice.
+* Jeremy howard's implementation of Feature loss is was used as the loss function for training.
+
 ## References
 1. Srresnet paper : Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network https://arxiv.org/abs/1609.04802
 2.  `twtygqyy`'s implementation of Srresnet https://github.com/twtygqyy/pytorch-SRResNet
