@@ -102,6 +102,26 @@ To get started with the provided test inputs , run the following line of code
 python upscale.py --input_dir "test_inputs" --output_dir "test_outputs" --model "2D_Art_0.pkl" --scale_factor 4 --fp_16
 ```
 
+### Training your own model
+
+To Train your own model , you can use the `train.ipynb` jupyter notebook.
+* Set Paths to your low resolution and high resolution images by edditing the following lines of code
+```
+low_res_images_path = ""
+high_res_images_path = ""
+```
+* Your low resolution images should be about scaled by 0.5 times the original image
+* Set model Hyperparameters according to your input image size and GPU
+* NOTE : FP16 training is not supported by older GPU's. In newer GPU's it will allow you to train with larger batchsize and can speedup training
+* Use the Learning Rate Finder to select an appropriate learning rate. (If you are now sure how to interpret the graph , just use the default of 1e-4, it works fine)
+* Edit the following line of code and set a name for your model. Your model will be stored inside a "models" folder in your low resolution image directory
+```
+learn.save("NAME OF MODEL")
+```
+* After you are done Training, use the final export block to export your model as a ".pkl" file. (Note : Loading the model does not require the extention but make sure to provide the .pkl extention in the export command)
+
+You have now trained your own model ! Copy paste it in the models directory of the repo and use the upscale.py file to see how it performs on the test inputs !
+
 ## Technical tidbits:
 * It uses the SR-Resnet model first shown in the Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network https://arxiv.org/abs/1609.04802 paper but combines it with feature loss described in Perceptual Losses for Real-Time Style Transfer and Super-Resolution https://arxiv.org/abs/1603.08155.
 * `twtygqyy`'s implementation of Srresnet https://github.com/twtygqyy/pytorch-SRResNet is modified to do 2x instead of 4x upscaling. For 4x upscaling the code simplay passes the same image through the model twice.
