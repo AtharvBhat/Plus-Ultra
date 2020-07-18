@@ -5,6 +5,10 @@ Plus Ultra is a tool to enhance digital media. Currently it supports upscaling a
 I DONOT own the rights to any of the screenshots , images or art presented in this repo. The rights are held by their original owners and makers. I am using it in my repo for demonstration purposes only !
 If you are the original owner of the images used here and want them to be removed , please contact me and i will make sure to remove them !
 
+**Note : The 2D_Art_0 model has been renamed to "Art.pkl". 2D_Art_1 and 2D_Art_2 models have been removed as the 2D_Art_0 was seen to perform better in almost all test cases.**
+**New model "Photo", trained on real life images has been added.**
+
+
 ## Comparison between an input image upscaled by 4x using Bicubic upscaling and 2D_Art_0 Model
 ![Violet evergarden comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/VioletEvergarden_comparison.png)
 ![Persona 5 comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/Persona5_comparison.png)
