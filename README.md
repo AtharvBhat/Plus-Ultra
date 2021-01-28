@@ -104,7 +104,7 @@ optional arguments:
 ```
 To get started with the provided test inputs , run the following line of code
 ```
-python upscale.py --input_dir "test_inputs" --output_dir "test_outputs" --model "2D_Art_0.pkl" --scale_factor 4 --fp_16
+python upscale.py --input_dir "test_inputs" --output_dir "test_outputs" --model "Art.pkl" --scale_factor 4 --fp_16
 ```
 
 ### Training your own model
