@@ -5,7 +5,7 @@ Plus Ultra is a tool to enhance digital media. Currently it supports upscaling a
 I DONOT own the rights to any of the screenshots , images or art presented in this repo. The rights are held by their original owners and makers. I am using it in my repo for demonstration purposes only !
 If you are the original owner of the images used here and want them to be removed , please contact me and i will make sure to remove them !
 
-**Note : The 2D_Art_0 model has been renamed to "Art.pkl". 2D_Art_1 and 2D_Art_2 models have been removed as the 2D_Art_0 was seen to perform better in almost all test cases.**
+**Note : The 2D_Art_0 model has been renamed to "Art.pkl"**
 **New model "Photo", trained on real life images has been added.**
 
 
@@ -15,14 +15,13 @@ If you are the original owner of the images used here and want them to be remove
 ![Persona 5 waifu2x comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/persona5-waifu2x-comparison.png)
 
 ### What it is :
-This is an open source tool which uses various techniques to enhance digital media and currently only supports 2D illustrations and anime style images.
-It includes three models which all provide a different result. You can try them all and use the one which best suits your needs.
+This is an open source tool which uses deeplearning to enhance and denoise images.
 
-I recommend you start off with **2D_Art_0** as your default model. The rest of the models tend to oversharpen most images, but i have still included them as they work better than the default model in certain scenarios like the **Ghost in a Shell 1995** movie screenshot. You can check all the test cases in the `test_inputs` and `test_outputs` folders.
+It comes with two pretrained models namely, **Art.pkl** and **Photo.pkl**. These were indiviually trained to be better at enhancing 2D Anime style images and more realistic photos respectively.
 
 ### What it isn't :
 The provided 2D Art models were trained on frames extracted from dozens of anime videos scraped from youtube.
-The 2D Art model may not provide good results on realistic scenes with high-frequency texture detail since animes generally lack those details.
+The 2D Art model may not provide good results on realistic scenes with high-frequency texture detail since animes generally lack those details, hence the different pretrained model for realistic images.
 
 It isnt magic. It will not magically come up with new information about the image and make it look as good as you imagine. It infers things about the image and tries to approximate a better looking picture.  I will go into more technical details later.
 
