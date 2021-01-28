@@ -129,7 +129,7 @@ You have now trained your own model ! Copy paste it in the models directory of t
 
 ## Technical tidbits:
 * It uses the SR-Resnet model first shown in the Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network https://arxiv.org/abs/1609.04802 paper but combines it with feature loss described in Perceptual Losses for Real-Time Style Transfer and Super-Resolution https://arxiv.org/abs/1603.08155.
-* `twtygqyy`'s implementation of Srresnet https://github.com/twtygqyy/pytorch-SRResNet is modified to do 2x instead of 4x upscaling. For 4x upscaling the code simplay passes the same image through the model twice.
+* `twtygqyy`'s implementation of Srresnet https://github.com/twtygqyy/pytorch-SRResNet is modified to do 2x instead of 4x upscaling. For 4x upscaling the code simply passes the same image through the model twice.
 * Jeremy howard's implementation of Feature loss is was used as the loss function for training.
 
 ## References
