@@ -10,9 +10,9 @@ If you are the original owner of the images used here and want them to be remove
 
 
 ## Comparison between an input image upscaled by 4x using Bicubic upscaling and 2D_Art_0 Model
-![Violet evergarden comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/VioletEvergarden_comparison.png)
-![Persona 5 comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/Persona5_comparison.png)
-![Persona 5 waifu2x comparison](https://raw.githubusercontent.com/AtharvBhat/Plus-Ultra/master/results/persona5-waifu2x-comparison.png)
+![Violet evergarden comparison](https://github.com/AtharvBhat/Plus-Ultra/blob/1.0.0/results/VioletEvergarden_comparison.png)
+![Persona 5 comparison](https://github.com/AtharvBhat/Plus-Ultra/blob/1.0.0/results/Persona5_comparison.png)
+![Persona 5 waifu2x comparison](https://github.com/AtharvBhat/Plus-Ultra/blob/1.0.0/results/persona5-waifu2x-comparison.png)
 
 ### What it is :
 This is an open source tool which uses deeplearning to enhance and denoise images.
