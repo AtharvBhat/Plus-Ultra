@@ -1,3 +1,4 @@
+import os
 import torchvision.transforms.functional as T
 import torch
 import cv2
@@ -65,3 +66,17 @@ class ToTensor(object):
         y_tensor = T.to_tensor(y)
 
         return {"x": x_tensor, "y":y_tensor}
+
+class ResizeX(object):
+    """
+    args : scale (how much to rescale input image default 0.5)
+    Resize input image leave target as it is
+    """
+    def __init__(self, scale=0.5):
+        self.scale = scale
+
+    def __call__(self, sample):
+        x, y = sample["x"], sample["y"]
+        _, h, w = x.shape
+        x = T.resize(x, size=(int(self.scale*h), int(self.scale*w)))
+        return {"x":x, "y":y}
