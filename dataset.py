@@ -1,5 +1,5 @@
-import torch
 import os
+import torch
 from torch.utils.data import Dataset
 import PIL.Image as Image
 import transforms as T
@@ -16,9 +16,9 @@ class SRDataset(Dataset):
         sample = {"x": pil_image, "y": pil_image}
 
         if self.transforms is not None:
-            return self.transforms(sample)
+                return self.transforms(sample)
         else:
-            return sample
+            print("Dataset Object needs transforms!")
 
     def __len__(self):
         return len(self.image_list)

@@ -1,6 +1,7 @@
 from PIL import Image
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 def pil_to_cv2(pil_image):
     """
@@ -25,3 +26,17 @@ def jpeg_compress(cv2_img, quality):
     _, jpeg_encode = cv2.imencode(".jpg", cv2_img, [cv2.IMWRITE_JPEG_QUALITY, quality])
     compressed_img = cv2.imdecode(jpeg_encode, cv2.IMREAD_UNCHANGED)
     return compressed_img
+
+def train_one_epoch(model, criterion, train_loader, device, optimizer):
+    for i, sample in tqdm(enumerate(train_loader)):
+        optimizer.zero_grad()
+        x, y = sample["x"], sample["y"]
+        x, y = x.to(device), y.to(device)
+
+        y_pred = model(x)
+
+        loss = criterion(y_pred, y)
+        loss.backward()
+        optimizer.step()
+        if i%1 == 0:
+            print(loss.item())

@@ -1,7 +1,5 @@
-import os
 import torchvision.transforms.functional as T
 import torch
-import cv2
 import numpy as np
 from utils import pil_to_cv2, cv2_to_pil, jpeg_compress
 
@@ -42,7 +40,7 @@ class RandomCrop(object):
         _, h ,w = x.shape
 
         assert x.shape == y.shape , "Both input and target should be same size"
-        assert self.size < h or self.size < w , f"Crop size {self.size} should be smaller than image size {x.shape}"
+        assert self.size < h and self.size < w , f"Crop size {self.size} should be smaller than image size {x.shape}"
 
         randx = torch.randint(0, h-self.size, (1,1))[0][0]
         randy = torch.randint(0, w-self.size, (1,1))[0][0]
