@@ -1,5 +1,31 @@
 import torchvision.transforms.functional as T
 import torch
+import cv2
+import numpy as np
+from utils import pil_to_cv2, cv2_to_pil, jpeg_compress
+
+class JpegCorrupt(object):
+    """
+    args:
+    prob : probability of applying jpeg compression
+    range : (low, high) range of jpeg quality to randomly select amount of compression
+    """
+    def __init__(self, prob, range) -> None:
+        self.prob = prob
+        self.low, self.high = range
+
+    def __call__(self, sample):
+        x, y = sample["x"], sample["y"]
+
+        #jpeg compress x   
+        if np.random.rand() < self.prob:
+            cv2_image = pil_to_cv2(x)
+            jpeg_quality = np.random.randint(self.low, self.high)
+            cv2_image_compressed = jpeg_compress(cv2_image, jpeg_quality)
+            x = cv2_to_pil(cv2_image_compressed)
+        
+        return {"x": x, "y": y}
+
 
 class RandomCrop(object):
     """
