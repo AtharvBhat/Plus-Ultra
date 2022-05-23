@@ -1,1 +1,3 @@
-data/images/*.*
+data/train_images/*.*
+*/*.pyc
+wandb
