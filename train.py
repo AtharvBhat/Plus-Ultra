@@ -3,9 +3,8 @@ from torch.utils.data import DataLoader
 import torchvision
 import transforms as T
 from dataset import SRDataset
-import matplotlib.pyplot as plt
 from model import AttU_Net2x
-from utils import train_one_epoch
+from utils import train_one_epoch, run_inference
 import wandb
 
 if __name__ == "__main__":
@@ -18,16 +17,22 @@ if __name__ == "__main__":
     lr = 1e-4
     num_epochs = 10
 
-    transforms = torchvision.transforms.Compose([T.JpegCorrupt(0.5, (10, 100)),
+    transforms_train = torchvision.transforms.Compose([T.JpegCorrupt(0.5, (10, 100)),
                                                 T.ToTensor(),
                                                 T.RandomCrop(512),
                                                 T.ResizeX()])
 
+    transforms_test = torchvision.transforms.Compose([T.ToTensor()])
+
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    dataset = SRDataset("data/train_images", transforms=transforms)
-    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    train_dataset = SRDataset("data/train_images", transforms=transforms_train)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+
+    test_dataset = SRDataset("data/train_images", transforms=transforms_test)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=8)
+
     model = AttU_Net2x()
     model = model.to(device)
     criterion = torch.nn.MSELoss()
@@ -45,5 +50,6 @@ if __name__ == "__main__":
         else:
             torch.save(model.state_dict(), "checkpoints/best_model.pth")
             best_loss = epoch_loss
+        
 
     wandb.finish()

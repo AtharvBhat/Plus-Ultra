@@ -78,3 +78,21 @@ class ResizeX(object):
         _, h, w = x.shape
         x = T.resize(x, size=(int(self.scale*h), int(self.scale*w)))
         return {"x":x, "y":y}
+
+class PadToMultiple(object):
+    """
+    args : multiple of
+    Resize input image leave target as it is.
+    Input image width and height will both be resized to nearest multiple of given number
+    """
+    def __init__(self, multiple):
+        self.multiple = multiple
+
+    def __call__(self, sample):
+        x, y = sample["x"], sample["y"]
+        _, h, w = x.shape
+        h_multiple = (h//self.multiple + 1) * self.multiple
+        w_multiple = (w//self.multiple + 1) * self.multiple
+        canvas = torch.zeros((3, h_multiple, w_multiple))
+        canvas[:, 0:h, 0:w] = x
+        return {"x":canvas, "y":y, "h":h, "w":w}
