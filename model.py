@@ -245,8 +245,19 @@ class AttU_Net(nn.Module):
 class AttU_Net2x(nn.Module):
     def __init__(self):
         super(AttU_Net2x, self).__init__()
-        self.unet = AttU_Net(3,3)
-        self.upscaler = up_conv(3,3)
+        self.unet = AttU_Net(3,64)
+        self.upscaler = up_conv(64,3)
+
+    def forward(self, x):
+        x = self.unet(x)
+        x = self.upscaler(x)
+        return x
+
+class U_Net2x(nn.Module):
+    def __init__(self):
+        super(U_Net2x, self).__init__()
+        self.unet = U_Net(3,64)
+        self.upscaler = up_conv(64,3)
 
     def forward(self, x):
         x = self.unet(x)
