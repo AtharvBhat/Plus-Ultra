@@ -12,7 +12,7 @@ class SRDataset(Dataset):
 
     def __getitem__(self, i: int):
         image_path = self.path + '/' + self.image_list[i]
-        pil_image = Image.open(image_path)
+        pil_image = Image.open(image_path).convert('RGB')
         sample = {"x": pil_image, "y": pil_image}
 
         if self.transforms is not None:
