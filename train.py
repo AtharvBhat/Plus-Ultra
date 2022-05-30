@@ -1,10 +1,11 @@
+import math
 import torch
 from torch.utils.data import DataLoader
 import torchvision
 import transforms as T
 from dataset import SRDataset
-from model import U_Net2x
-from utils import train_one_epoch
+from model import Unet
+from utils import train_one_epoch, numParams
 from loss_functions import FPN_loss
 import torch.nn.functional as F
 import wandb
@@ -15,11 +16,11 @@ if __name__ == "__main__":
     wandb.init(project="Plus-Ultra", entity="atharvbhat")
 
     #hyper params
-    batch_size = 16
-    lr = 1e-3
-    num_epochs = 10
+    batch_size = 8
+    lr = 1e-5
+    num_epochs = 20
 
-    transforms_train = torchvision.transforms.Compose([T.JpegCorrupt(0.5, (10, 100)),
+    transforms_train = torchvision.transforms.Compose([T.JpegCorrupt(0.5, (50, 70)),
                                                 T.ToTensor(),
                                                 T.RandomCrop(512),
                                                 T.ResizeX()])
@@ -29,13 +30,16 @@ if __name__ == "__main__":
     train_dataset = SRDataset("data/train_images", transforms=transforms_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=10)
 
-    model = U_Net2x()
+    model = Unet()
+    numParams(model)
     model = model.to(device)
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr = lr, weight_decay=1e-5)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, lr, epochs=num_epochs, steps_per_epoch=len(train_loader))
+    criterion = torch.nn.L1Loss()
+    optimizer = torch.optim.Adam(model.parameters(), lr = lr, weight_decay=0)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, lr, pct_start=0.1, anneal_strategy='linear', epochs=num_epochs, steps_per_epoch=len(train_loader))
 
-    wandb.watch(model, criterion, "all", 50, log_graph=True)
+    #load weights if finetuning
+    #model.load_state_dict(torch.load("checkpoints/best_model.pth"))
+    wandb.watch(model, criterion, "all", 50, log_graph=False)
 
     best_loss = None
     for i in range(num_epochs):
