@@ -12,7 +12,7 @@ def tensor_to_numpy(image_tensor):
     Given a torch image tensor CxHxW, returns scaled numpy array HxWxC
     which can be displayed by matplotlib or saved using PIL
     """
-    unnormalize = torch.clip(image_tensor.cpu(), 0, 1) * 255
+    unnormalize = torch.clip(image_tensor.cpu().float(), 0, 1) * 255
     permute = unnormalize[0].permute(1,2,0)
     return permute.numpy().astype(np.uint8)
 
@@ -65,6 +65,7 @@ def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
+            i+=1
             if i%log_step == 0:
                 wandb.log({"Step Loss" : loss.item(), "lr" : optimizer.param_groups[0]['lr']})
             avg_loss += loss.item()
@@ -73,11 +74,11 @@ def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler
             loss = criterion(y_pred, y)
             loss.backward()
             optimizer.step()
+            i+=1
             if i%log_step == 0:
                 wandb.log({"Step Loss" : loss.item(), "lr" : optimizer.param_groups[0]['lr']})
             avg_loss += loss.item()
         
-        i+=1
         scheduler.step()
     return avg_loss/i
 
@@ -121,3 +122,7 @@ def visualize_outputs(image_list, figsize, path=None):
             pil_image.save(f"{path}/{i}.png")
     
     return fig
+
+def numParams(model):
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Number of trainable parameters : {pytorch_total_params:,}")
