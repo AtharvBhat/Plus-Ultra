@@ -1,265 +1,117 @@
-#Adapted from https://github.com/LeeJunHyun/Image_Segmentation
-
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import init
 
-def init_weights(net, init_type='normal', gain=0.02):
-    def init_func(m):
-        classname = m.__class__.__name__
-        if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
-            if init_type == 'normal':
-                init.normal_(m.weight.data, 0.0, gain)
-            elif init_type == 'xavier':
-                init.xavier_normal_(m.weight.data, gain=gain)
-            elif init_type == 'kaiming':
-                init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
-            elif init_type == 'orthogonal':
-                init.orthogonal_(m.weight.data, gain=gain)
-            else:
-                raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
-            if hasattr(m, 'bias') and m.bias is not None:
-                init.constant_(m.bias.data, 0.0)
-        elif classname.find('BatchNorm2d') != -1:
-            init.normal_(m.weight.data, 1.0, gain)
-            init.constant_(m.bias.data, 0.0)
+class Swish(nn.Module):
+    def __init__(self, swish=1.0) -> None:
+        super(Swish, self).__init__()
+        self.swish = swish
 
-    print('initialize network with %s' % init_type)
-    net.apply(init_func)
+    def forward(self, x):
+        if self.swish == 1.0:
+            return F.silu(x)
+        else:
+            return x * F.sigmoid(x * float(self.swish))
 
-class conv_block(nn.Module):
-    def __init__(self,ch_in,ch_out):
-        super(conv_block,self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(ch_in, ch_out, kernel_size=3,stride=1,padding=1,bias=True),
-            nn.BatchNorm2d(ch_out),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(ch_out, ch_out, kernel_size=3,stride=1,padding=1,bias=True),
-            nn.BatchNorm2d(ch_out),
-            nn.ReLU(inplace=True)
+class ResNetBlock(nn.Module):
+    def __init__(self, channels, num_groups = 32, skip_connection_scale=1, swish=1.0, skip_path=False):
+        super(ResNetBlock, self).__init__()
+        
+        self.main_path = nn.Sequential(
+            nn.GroupNorm(num_groups, channels),
+            Swish(swish),
+            nn.Conv2d(channels, channels, 3, 1, 1),
+            nn.GroupNorm(num_groups, channels),
+            Swish(swish),
+            nn.Conv2d(channels, channels, 3, 1, 1)
         )
+        self.skip_path = skip_path
+        if skip_path:
+            self.skip = nn.Conv2d(channels, channels, 1, 1, 0)
+        self.skip_conn_scale = skip_connection_scale
+    
+    def forward(self, x):
+        x_main = self.main_path(x)
+        if self.skip_path:
+            x_skip = self.skip(x)
+        else:
+            x_skip = x
+        return x_main + x_skip * self.skip_conn_scale
 
+class DBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, numResNetBlocks, num_groups = 32, skip_connection_scale=1, swish=1.0, use_conv=False, skip_path=False) -> None:
+        super(DBlock, self).__init__()
+        self.max_pool = nn.MaxPool2d(2, 2)
+        self.use_conv = use_conv
+        if use_conv:
+            self.down_sample_conv = nn.Conv2d(in_channels, out_channels, 3, 2, 1)
+        else:
+            self.down_sample_conv = nn.Conv2d(in_channels, out_channels, 3, 1, 1)
+        self.resblocks = nn.ModuleList([ResNetBlock(out_channels, num_groups, skip_connection_scale, swish, skip_path=skip_path) for i in range(numResNetBlocks)])
 
-    def forward(self,x):
-        x = self.conv(x)
+    def forward(self, x):
+        if not self.use_conv:
+            x = self.max_pool(x)
+        x = self.down_sample_conv(x)
+        for resblock in self.resblocks:
+            x = resblock(x)
         return x
 
-class up_conv(nn.Module):
-    def __init__(self,ch_in,ch_out):
-        super(up_conv,self).__init__()
-        self.up = nn.Sequential(
+
+class UBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, numResNetBlocks, num_groups = 32, skip_connection_scale=1, swish=1.0, skip_path=False) -> None:
+        super(UBlock, self).__init__()
+        self.upblock = nn.Sequential(
             nn.Upsample(scale_factor=2),
-            nn.Conv2d(ch_in,ch_out,kernel_size=3,stride=1,padding=1,bias=True),
-		    nn.BatchNorm2d(ch_out),
-			nn.ReLU(inplace=True)
+            nn.Conv2d(in_channels, out_channels, 3, 1, 1)
         )
-
-    def forward(self,x):
-        x = self.up(x)
-        return x
-
-
-class single_conv(nn.Module):
-    def __init__(self,ch_in,ch_out):
-        super(single_conv,self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(ch_in, ch_out, kernel_size=3,stride=1,padding=1,bias=True),
-            nn.BatchNorm2d(ch_out),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self,x):
-        x = self.conv(x)
-        return x
-
-class Attention_block(nn.Module):
-    def __init__(self,F_g,F_l,F_int):
-        super(Attention_block,self).__init__()
-        self.W_g = nn.Sequential(
-            nn.Conv2d(F_g, F_int, kernel_size=1,stride=1,padding=0,bias=True),
-            nn.BatchNorm2d(F_int)
-            )
-        
-        self.W_x = nn.Sequential(
-            nn.Conv2d(F_l, F_int, kernel_size=1,stride=1,padding=0,bias=True),
-            nn.BatchNorm2d(F_int)
-        )
-
-        self.psi = nn.Sequential(
-            nn.Conv2d(F_int, 1, kernel_size=1,stride=1,padding=0,bias=True),
-            nn.BatchNorm2d(1),
-            nn.Sigmoid()
-        )
-        
-        self.relu = nn.ReLU(inplace=True)
-        
-    def forward(self,g,x):
-        g1 = self.W_g(g)
-        x1 = self.W_x(x)
-        psi = self.relu(g1+x1)
-        psi = self.psi(psi)
-
-        return x*psi
-
-
-class U_Net(nn.Module):
-    def __init__(self,img_ch=3,output_ch=1):
-        super(U_Net,self).__init__()
-        
-        self.Maxpool = nn.MaxPool2d(kernel_size=2,stride=2)
-
-        self.Conv1 = conv_block(ch_in=img_ch,ch_out=64)
-        self.Conv2 = conv_block(ch_in=64,ch_out=128)
-        self.Conv3 = conv_block(ch_in=128,ch_out=256)
-        self.Conv4 = conv_block(ch_in=256,ch_out=512)
-        self.Conv5 = conv_block(ch_in=512,ch_out=1024)
-
-        self.Up5 = up_conv(ch_in=1024,ch_out=512)
-        self.Up_conv5 = conv_block(ch_in=1024, ch_out=512)
-
-        self.Up4 = up_conv(ch_in=512,ch_out=256)
-        self.Up_conv4 = conv_block(ch_in=512, ch_out=256)
-        
-        self.Up3 = up_conv(ch_in=256,ch_out=128)
-        self.Up_conv3 = conv_block(ch_in=256, ch_out=128)
-        
-        self.Up2 = up_conv(ch_in=128,ch_out=64)
-        self.Up_conv2 = conv_block(ch_in=128, ch_out=64)
-
-        self.Conv_1x1 = nn.Conv2d(64,output_ch,kernel_size=1,stride=1,padding=0)
-
-
-    def forward(self,x):
-        # encoding path
-        x1 = self.Conv1(x)
-
-        x2 = self.Maxpool(x1)
-        x2 = self.Conv2(x2)
-        
-        x3 = self.Maxpool(x2)
-        x3 = self.Conv3(x3)
-
-        x4 = self.Maxpool(x3)
-        x4 = self.Conv4(x4)
-
-        x5 = self.Maxpool(x4)
-        x5 = self.Conv5(x5)
-
-        # decoding + concat path
-        d5 = self.Up5(x5)
-        d5 = torch.cat((x4,d5),dim=1)
-        
-        d5 = self.Up_conv5(d5)
-        
-        d4 = self.Up4(d5)
-        d4 = torch.cat((x3,d4),dim=1)
-        d4 = self.Up_conv4(d4)
-
-        d3 = self.Up3(d4)
-        d3 = torch.cat((x2,d3),dim=1)
-        d3 = self.Up_conv3(d3)
-
-        d2 = self.Up2(d3)
-        d2 = torch.cat((x1,d2),dim=1)
-        d2 = self.Up_conv2(d2)
-
-        d1 = self.Conv_1x1(d2)
-
-        return d1
-
-
-
-class AttU_Net(nn.Module):
-    def __init__(self,img_ch=3,output_ch=1):
-        super(AttU_Net,self).__init__()
-        
-        self.Maxpool = nn.MaxPool2d(kernel_size=2,stride=2)
-
-        self.Conv1 = conv_block(ch_in=img_ch,ch_out=64)
-        self.Conv2 = conv_block(ch_in=64,ch_out=128)
-        self.Conv3 = conv_block(ch_in=128,ch_out=256)
-        self.Conv4 = conv_block(ch_in=256,ch_out=512)
-        self.Conv5 = conv_block(ch_in=512,ch_out=1024)
-
-        self.Up5 = up_conv(ch_in=1024,ch_out=512)
-        self.Att5 = Attention_block(F_g=512,F_l=512,F_int=256)
-        self.Up_conv5 = conv_block(ch_in=1024, ch_out=512)
-
-        self.Up4 = up_conv(ch_in=512,ch_out=256)
-        self.Att4 = Attention_block(F_g=256,F_l=256,F_int=128)
-        self.Up_conv4 = conv_block(ch_in=512, ch_out=256)
-        
-        self.Up3 = up_conv(ch_in=256,ch_out=128)
-        self.Att3 = Attention_block(F_g=128,F_l=128,F_int=64)
-        self.Up_conv3 = conv_block(ch_in=256, ch_out=128)
-        
-        self.Up2 = up_conv(ch_in=128,ch_out=64)
-        self.Att2 = Attention_block(F_g=64,F_l=64,F_int=32)
-        self.Up_conv2 = conv_block(ch_in=128, ch_out=64)
-
-        self.Conv_1x1 = nn.Conv2d(64,output_ch,kernel_size=1,stride=1,padding=0)
-
-
-    def forward(self,x):
-        # encoding path
-        x1 = self.Conv1(x)
-
-        x2 = self.Maxpool(x1)
-        x2 = self.Conv2(x2)
-        
-        x3 = self.Maxpool(x2)
-        x3 = self.Conv3(x3)
-
-        x4 = self.Maxpool(x3)
-        x4 = self.Conv4(x4)
-
-        x5 = self.Maxpool(x4)
-        x5 = self.Conv5(x5)
-
-        # decoding + concat path
-        d5 = self.Up5(x5)
-        x4 = self.Att5(g=d5,x=x4)
-        d5 = torch.cat((x4,d5),dim=1)        
-        d5 = self.Up_conv5(d5)
-        
-        d4 = self.Up4(d5)
-        x3 = self.Att4(g=d4,x=x3)
-        d4 = torch.cat((x3,d4),dim=1)
-        d4 = self.Up_conv4(d4)
-
-        d3 = self.Up3(d4)
-        x2 = self.Att3(g=d3,x=x2)
-        d3 = torch.cat((x2,d3),dim=1)
-        d3 = self.Up_conv3(d3)
-
-        d2 = self.Up2(d3)
-        x1 = self.Att2(g=d2,x=x1)
-        d2 = torch.cat((x1,d2),dim=1)
-        d2 = self.Up_conv2(d2)
-
-        d1 = self.Conv_1x1(d2)
-
-        return d1
-
-class AttU_Net2x(nn.Module):
-    def __init__(self):
-        super(AttU_Net2x, self).__init__()
-        self.unet = AttU_Net(3,64)
-        self.upscaler = up_conv(64,3)
+        self.resblocks = nn.ModuleList([ResNetBlock(in_channels, num_groups, skip_connection_scale, swish, skip_path=skip_path) for i in range(numResNetBlocks)])
 
     def forward(self, x):
-        x = self.unet(x)
-        x = self.upscaler(x)
-        return x
+        for resblock in self.resblocks:
+            x = resblock(x) 
+        x = self.upblock(x)    
 
-class U_Net2x(nn.Module):
-    def __init__(self):
-        super(U_Net2x, self).__init__()
-        self.unet = U_Net(3,64)
-        self.upscaler = up_conv(64,3)
+        return x 
 
+class Unet(nn.Module):
+    def __init__(self, num_groups = 32, skip_connection_scale=1, swish=1.0, skip_conv=False, downsample_conv=False) -> None:
+        super(Unet, self).__init__()
+        #downsample blocks
+        self.inp_conv = nn.Sequential(nn.Conv2d(3, 64, 3, 1, 1),
+                                    ResNetBlock(64),
+                                    nn.GroupNorm(num_groups, 64),
+                                    Swish(swish))
+        self.down_1 = DBlock(64, 128, 1, num_groups, skip_connection_scale, swish, use_conv=downsample_conv, skip_path=skip_conv) 
+        self.down_2 = DBlock(128, 256, 1, num_groups, skip_connection_scale, swish, use_conv=downsample_conv, skip_path=skip_conv)
+        self.down_3 = DBlock(256, 512, 1, num_groups, skip_connection_scale, swish, use_conv=downsample_conv, skip_path=skip_conv)
+        self.down_4 = DBlock(512, 1024, 1, num_groups, skip_connection_scale, swish, use_conv=downsample_conv, skip_path=skip_conv)
+
+        #upsample blocks
+        self.up_1 = UBlock(1024, 512, 1, num_groups, skip_connection_scale, swish, skip_path=skip_conv)
+        self.up_2 = UBlock(512, 256, 1, num_groups, skip_connection_scale, swish, skip_path=skip_conv)
+        self.up_3 = UBlock(256, 128, 1, num_groups, skip_connection_scale, swish, skip_path=skip_conv)
+        self.up_4 = UBlock(128, 64, 1, num_groups, skip_connection_scale, swish, skip_path=skip_conv)
+        self.up_5 = UBlock(64, 32, 1, num_groups, skip_connection_scale, swish, skip_path=skip_conv)
+        self.out_conv = nn.Sequential(nn.GroupNorm(num_groups, 32),
+                                    Swish(swish),
+                                    nn.Conv2d(32, 3, 3, 1, 1))
+    
     def forward(self, x):
-        x = self.unet(x)
-        x = self.upscaler(x)
-        return x
+        # assuming 3 x 256 x 256 input
+        x = self.inp_conv(x) # output: 64 x 256 x 256
+        #down sample
+        x_d1 = self.down_1(x) # output : 128 x 128 x 128
+        x_d2 = self.down_2(x_d1) # output : 256 x 64 x 64
+        x_d3 = self.down_3(x_d2) # output : 512 x 32 x 32
+        x_d4 = self.down_4(x_d3) # output : 1024 x 16 x 16
+        
+        #upsample
+        x_up1 = self.up_1(x_d4) # output : 512 x 32 x 32
+        x_up2 = self.up_2(x_up1 + x_d3) #output : 256 x 64 x 64
+        x_up3 = self.up_3(x_up2 + x_d2) # output : 128 x 128 x 128
+        x_up4 = self.up_4(x_up3 + x_d1) # output : 64 x 256 x 256
+        x_up5 = self.up_5(x_up4) # output : 32 x 512 x 512
+
+        out = self.out_conv(x_up5)
+
+        return out
