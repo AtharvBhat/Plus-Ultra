@@ -24,6 +24,7 @@ if __name__ == "__main__":
     num_epochs = config["epochs"]
     weight_decay = config["weight_decay"]
     fp_16 = config["fp_16"]
+    train_data_path = config["train_path"]
 
     transforms_train = torchvision.transforms.Compose([T.JpegCorrupt(0.5, (50, 70)),
                                                 T.ToTensor(),
@@ -32,7 +33,7 @@ if __name__ == "__main__":
 
     device = torch.device('cuda') if torch.cuda.is_available() and config["device"] == "cuda" else torch.device('cpu')
 
-    train_dataset = SRDataset("data/train_images", transforms=transforms_train)
+    train_dataset = SRDataset(train_data_path, transforms=transforms_train)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=10)
 
     model = Unet(config=config)
