@@ -12,21 +12,23 @@ if __name__ == "__main__":
     
     config = get_config("config.yaml")
     test_data_path = config["test_path"]
-
+    fp_16 = config["fp_16"]
     transforms_test = torchvision.transforms.Compose([T.ToTensor(),
                                                     T.PadToMultiple(16)])
 
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device('cuda') if torch.cuda.is_available() and config["device"] == "cuda" else torch.device('cpu')
 
     test_dataset = SRDataset(test_data_path, transforms=transforms_test)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=8)
 
-    model = Unet()
+    weights = torch.load("checkpoints/best_model.pth")["weights"]
+    config = torch.load("checkpoints/best_model.pth")["config"]
+    model = Unet(config)
     model = model.to(device)
-    model.load_state_dict(torch.load("checkpoints/best_model.pth"))
+    model.load_state_dict(weights)
 
-    test_outs = run_inference(model, test_loader, device, fp_16=True)
+    test_outs = run_inference(model, test_loader, device, fp_16=fp_16)
     fig = visualize_outputs(test_outs, (15,10), "data/outputs")
     plt.show()
     

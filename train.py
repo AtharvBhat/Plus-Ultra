@@ -44,7 +44,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, lr, pct_start=0.1, anneal_strategy='linear', epochs=num_epochs, steps_per_epoch=len(train_loader))
 
     #load weights if finetuning
-    #model.load_state_dict(torch.load("checkpoints/best_model.pth"))
+    #model.load_state_dict(torch.load("checkpoints/best_model.pth")["weights"])
     if config["wandb"]:
         wandb.watch(model, criterion, "all", 50, log_graph=False)
 
@@ -54,9 +54,9 @@ if __name__ == "__main__":
         if config["wandb"]:
             wandb.log({"Epoch Loss" : epoch_loss, "epoch" : i})
         if best_loss is not None and epoch_loss < best_loss:
-            torch.save(model.state_dict(), "checkpoints/best_model.pth")
+            torch.save({"weights":model.state_dict(), "config" : config}, "checkpoints/best_model.pth")
         else:
-            torch.save(model.state_dict(), "checkpoints/best_model.pth")
+            torch.save({"weights":model.state_dict(), "config" : config}, "checkpoints/best_model.pth")
             best_loss = epoch_loss
         
     if config["wandb"]:
