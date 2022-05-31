@@ -1,0 +1,22 @@
+#data stuff
+train_path : "data/train_images"
+test_path : "data/test_images"
+
+#hyper params
+lr : 1.0e-4 #max LR for OneCycleLR scheduler
+weight_decay : 1.0e-5
+epochs : 20 #number of epochs
+fp_16 : True #mixed precision training
+device : cuda
+wandb : True
+batch_size : 16
+
+# Unet model stuff
+base_channels : 32 # Number of channels in first down sample layer
+# Channels are doubled every downsample block and halved every upsample step
+swish : 1.0 #swish factor
+resblocks : [1, 1, 1, 1] #number of resnet blocks to be used every layer. Same number of resblocks are used at same spacial resolution
+num_groups : 16 # number of groups for group norm. if 0 , use batch norm
+skip_conv : False # whether to add a 1x1 conv in reset skip connections
+down_conv : False # whether downsample blocks use maxpool followed by conv to downsample or a single stride 2 conv
+skip_connection_scale : 1.0 # skip connection in resnet gets scaled by this much

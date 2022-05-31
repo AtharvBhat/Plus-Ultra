@@ -6,6 +6,12 @@ from tqdm import tqdm
 import wandb
 import torch
 import torch.cuda.amp
+import yaml
+
+def get_config(path):
+    with open(path, "rb") as f:
+        config = yaml.safe_load(f)
+    return config
 
 def tensor_to_numpy(image_tensor):
     """
@@ -44,7 +50,7 @@ def jpeg_compress(cv2_img, quality):
     compressed_img = cv2.imdecode(jpeg_encode, cv2.IMREAD_UNCHANGED)
     return compressed_img
 
-def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler, epoch, log_step=50, fp_16 = False):
+def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler, epoch, log_step=50, fp_16 = False, config=None):
     """
     Given a model, criterion, dataloader device, optimizer and scheduler
     runs one epoch of training
@@ -66,7 +72,7 @@ def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler
             scaler.step(optimizer)
             scaler.update()
             i+=1
-            if i%log_step == 0:
+            if i%log_step == 0 and config["wandb"]:
                 wandb.log({"Step Loss" : loss.item(), "lr" : optimizer.param_groups[0]['lr']})
             avg_loss += loss.item()
         else:
@@ -75,7 +81,7 @@ def train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler
             loss.backward()
             optimizer.step()
             i+=1
-            if i%log_step == 0:
+            if i%log_step == 0 and config["wandb"]:
                 wandb.log({"Step Loss" : loss.item(), "lr" : optimizer.param_groups[0]['lr']})
             avg_loss += loss.item()
         
