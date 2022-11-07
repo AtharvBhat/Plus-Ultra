@@ -9,6 +9,7 @@ from utils import get_config, train_one_epoch, numParams
 from loss_functions import FPN_loss
 import torch.nn.functional as F
 import wandb
+import kornia
 
 if __name__ == "__main__":
 
@@ -50,12 +51,12 @@ if __name__ == "__main__":
 
     best_loss = None
     for i in range(num_epochs):
-        epoch_loss = train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler, i, fp_16=True, config=config)
+        epoch_loss = train_one_epoch(model, criterion, train_loader, device, optimizer, scheduler, i, fp_16=fp_16, config=config)
         if config["wandb"]:
             wandb.log({"Epoch Loss" : epoch_loss, "epoch" : i})
-        if best_loss is not None and epoch_loss < best_loss:
+        if best_loss != None and epoch_loss < best_loss:
             torch.save({"weights":model.state_dict(), "config" : config}, "checkpoints/best_model.pth")
-        else:
+        if best_loss == None :
             torch.save({"weights":model.state_dict(), "config" : config}, "checkpoints/best_model.pth")
             best_loss = epoch_loss
         
