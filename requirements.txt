@@ -7,3 +7,9 @@ Sphinx
 coverage
 python-dotenv
 pre-commit
+pandas
+wandb
+img2dataset
+torch
+torchvision
+torchaudio
