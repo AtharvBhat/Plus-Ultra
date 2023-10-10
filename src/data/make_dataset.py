@@ -3,7 +3,6 @@
 Script to create image dataset from TSV files containing links
 """
 import logging
-from pathlib import Path
 
 import click
 import pandas as pd
@@ -22,7 +21,7 @@ def create_unsplash_datset() -> None:
         "photo_image_url"
     ].to_list()
     logging.info("Done! generating list of images")
-    with open(f"{unsplash_dst_dir}/urls.txt", "w") as txt_file:
+    with open(f"{unsplash_dst_dir}/urls.txt", "w", encoding="utf-8") as txt_file:
         for url in image_urls:
             txt_file.write(url + "\n")
 
@@ -46,27 +45,24 @@ def main(dataset) -> None:
     cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
-    logger.info(f"Creating Dataset for : {dataset}")
+    logger.info("Creating Dataset for : %s", dataset)
 
     if dataset is None:
-        raise (AttributeError("No dataset argument provided"))
+        raise AttributeError("No dataset argument provided")
 
     match dataset:
         case "unsplash":
             create_unsplash_datset()
         case _:
-            raise (NotImplementedError(f"{dataset} is not supported"))
+            raise NotImplementedError(f"{dataset} is not supported")
 
 
 if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    # not used in this stub but often useful for finding various files
-    project_dir = Path(__file__).resolve().parents[2]
+    LOG_FMT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=LOG_FMT)
 
     # find .env automagically by walking up directories until it's found, then
     # load up the .env entries as environment variables
     load_dotenv(find_dotenv())
 
-    main()
+    main()  # pylint: disable=E1120
