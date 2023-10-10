@@ -6,19 +6,56 @@ import logging
 from pathlib import Path
 
 import click
+import pandas as pd
 from dotenv import find_dotenv, load_dotenv
+from img2dataset import download
+
+from src.utils import get_project_root
+
+
+def create_unsplash_datset() -> None:
+    """Generate unsplash dataset from tsv file"""
+    logging.info("Reading Unsplash TSV File")
+    unsplash_src_dir = f"{get_project_root()}/data/external/unsplash"
+    unsplash_dst_dir = f"{get_project_root()}/data/raw/unsplash"
+    image_urls = pd.read_csv(f"{unsplash_src_dir}/photos.tsv000", sep="\t")[
+        "photo_image_url"
+    ].to_list()
+    logging.info("Done! generating list of images")
+    with open(f"{unsplash_dst_dir}/urls.txt", "w") as txt_file:
+        for url in image_urls:
+            txt_file.write(url + "\n")
+
+    # download images using img2dataset
+    logging.info("Done! Downloading images")
+    download(
+        f"{unsplash_dst_dir}/urls.txt",
+        output_folder=unsplash_dst_dir,
+        processes_count=6,
+        resize_mode="no",
+        encode_quality=9,
+        encode_format="png",
+    )
 
 
 @click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
-def main(input_filepath, output_filepath):
+@click.option("-d", "--dataset", default=None, type=str)
+def main(dataset) -> None:
     """
     Runs data processing scripts to turn raw data from (../raw) into
     cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
-    logger.info("making final data set from raw data")
+    logger.info(f"Creating Dataset for : {dataset}")
+
+    if dataset is None:
+        raise (AttributeError("No dataset argument provided"))
+
+    match dataset:
+        case "unsplash":
+            create_unsplash_datset()
+        case _:
+            raise (NotImplementedError(f"{dataset} is not supported"))
 
 
 if __name__ == "__main__":
