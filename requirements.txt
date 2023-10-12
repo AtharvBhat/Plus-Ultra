@@ -2,14 +2,20 @@
 -e .
 
 # external requirements
+types-PyYAML
+types-Pillow
+matplotlib
+seaborn
 click
 Sphinx
 coverage
 python-dotenv
 pre-commit
 pandas
+pandas-stubs
 wandb
 img2dataset
 torch
 torchvision
 torchaudio
+opencv-contrib-python

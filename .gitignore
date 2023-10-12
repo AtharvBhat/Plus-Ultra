@@ -90,4 +90,5 @@ data/external/unsplash/photos.tsv000
 data/raw/unsplash/*/*
 data/raw/unsplash/*.parquet
 data/raw/unsplash/*.txt
+data/raw/unsplash/*.json
 data/raw/unsplash/_tmp
