@@ -7,7 +7,7 @@ import logging
 import click
 import pandas as pd
 from dotenv import find_dotenv, load_dotenv
-from img2dataset import download
+from img2dataset import download  # type: ignore
 
 from src.utils import get_project_root
 
@@ -32,8 +32,8 @@ def create_unsplash_datset() -> None:
         output_folder=unsplash_dst_dir,
         processes_count=6,
         resize_mode="no",
-        encode_quality=9,
-        encode_format="png",
+        encode_quality=100,
+        encode_format="webp",
     )
 
 
