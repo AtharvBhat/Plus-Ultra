@@ -9,8 +9,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_tensor
 
-import src.data.transforms as transforms
-import src.utils as utils
+import plusultra.data.transforms as transforms
+import plusultra.utils as utils
 
 
 class UnsplashDataset(Dataset):

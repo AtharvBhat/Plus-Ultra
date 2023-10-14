@@ -8,7 +8,7 @@ import torch
 import torchvision.transforms.functional as ft
 from PIL import Image
 
-from src.utils import cv2_to_pil, jpeg_compress, pil_to_cv2
+from plusultra.utils import cv2_to_pil, jpeg_compress, pil_to_cv2
 
 
 class ImageTransform(object):

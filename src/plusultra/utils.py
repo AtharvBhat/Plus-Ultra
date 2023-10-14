@@ -16,7 +16,7 @@ def get_project_root() -> str:
     """
     Function to return the root dir of the project
     """
-    return str(Path(__file__).parent.parent)
+    return str(Path(__file__).parents[2])
 
 
 def get_config(path: str) -> dict[str, Any]:

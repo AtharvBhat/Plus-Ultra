@@ -9,15 +9,15 @@ import pandas as pd
 from dotenv import find_dotenv, load_dotenv
 from img2dataset import download  # type: ignore
 
-from src.utils import get_project_root
+from plusultra.utils import get_project_root
 
 
 def create_unsplash_datset() -> None:
     """Generate unsplash dataset from tsv file"""
     logging.info("Reading Unsplash TSV File")
-    unsplash_src_dir = f"{get_project_root()}/data/external/unsplash"
+    unsplash_plusultra_dir = f"{get_project_root()}/data/external/unsplash"
     unsplash_dst_dir = f"{get_project_root()}/data/raw/unsplash"
-    image_urls = pd.read_csv(f"{unsplash_src_dir}/photos.tsv000", sep="\t")[
+    image_urls = pd.read_csv(f"{unsplash_plusultra_dir}/photos.tsv000", sep="\t")[
         "photo_image_url"
     ].to_list()
     logging.info("Done! generating list of images")
