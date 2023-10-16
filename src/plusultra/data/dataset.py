@@ -7,6 +7,7 @@ import pathlib
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision.transforms import RandomCrop
 from torchvision.transforms.functional import to_tensor
 
 import plusultra.data.transforms as transforms
@@ -36,7 +37,7 @@ class UnsplashDataset(Dataset):
         self.image_list = [
             path
             for path in pathlib.Path(f"{utils.get_project_root()}/{path}").rglob(
-                "*.webp"
+                "*.jpg"
             )
         ]
         self.transforms = transforms
@@ -60,7 +61,7 @@ class UnsplashDataset(Dataset):
             tuple[torch.Tensor, torch.Tensor]: Tuple[input, target]
         """
         image = Image.open(self.image_list[index])
-        image = transforms.RandomCrop(self.size)(image)
+        image = RandomCrop(self.size)(image)
         target = image.copy()
 
         for transform in self.transforms:

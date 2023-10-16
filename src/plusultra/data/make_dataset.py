@@ -32,8 +32,8 @@ def create_unsplash_datset() -> None:
         output_folder=unsplash_dst_dir,
         processes_count=6,
         resize_mode="no",
-        encode_quality=100,
-        encode_format="webp",
+        encode_quality=95,
+        encode_format="jpg",
     )
 
 

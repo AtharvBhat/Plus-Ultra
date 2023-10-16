@@ -3,12 +3,15 @@
 Contains Abstract class and other user defined transforms that get applied to each image
 """
 
+from io import BytesIO
+from typing import Any
+
 import numpy as np
 import torch
 import torchvision.transforms.functional as ft
 from PIL import Image
 
-from plusultra.utils import cv2_to_pil, jpeg_compress, pil_to_cv2
+from plusultra.utils import cv2_to_pil, jpeg_compress_pil, pil_to_cv2
 
 
 class ImageTransform(object):
@@ -34,16 +37,29 @@ class JpegCorrupt(ImageTransform):
     """
 
     def __init__(self, prob: float = 1.0, corruption_amount: int = 0) -> None:
+        """Initialize a jpeg corruption transform
+
+        Args:
+            prob (float, optional): Probability that the input gets compress. Defaults to 1.0.
+            corruption_amount (int, optional): Amount of jpeg compression. Defaults to 0.
+                If a tuple(low, high) is passed, quality of range is picked randomly
+        """
         self.prob = prob
-        self.jpeg_quality = 100 - corruption_amount
+        self.is_range = True if isinstance(corruption_amount, tuple) else False
+        self.jpeg_quality = (
+            100 - corruption_amount if not self.is_range else corruption_amount
+        )
 
     def __call__(self, image: Image) -> Image:
+        if self.is_range:
+            low, high = self.jpeg_quality  # type: ignore
+            jpeg_quality = np.random.randint(100 - high, 100 - low)  # type: ignore
+        else:
+            jpeg_quality = self.jpeg_quality
         if np.random.rand() < self.prob:
-            cv2_image = pil_to_cv2(image)
-            cv2_image_compressed = jpeg_compress(cv2_image, self.jpeg_quality)
-            image = cv2_to_pil(cv2_image_compressed)
-
-        return image
+            return jpeg_compress_pil(image, jpeg_quality)
+        else:
+            return image
 
 
 class RandomCrop(ImageTransform):
@@ -115,10 +131,9 @@ class ResizeImage(ImageTransform):
     def __init__(self, scale=0.5):
         self.scale = scale
 
-    def __call__(self, image: Image) -> Image:
-        torch_image = ft.to_tensor(image)
-        _, h, w = torch_image.shape
+    def __call__(self, image: Image) -> Any:
+        h, w = image.size
         torch_image = ft.resize(
-            torch_image, size=(int(self.scale * h), int(self.scale * w)), antialias=True
+            image, size=(int(self.scale * h), int(self.scale * w)), antialias=True
         )
-        return ft.to_pil_image(torch_image)
+        return torch_image

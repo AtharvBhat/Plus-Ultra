@@ -1,13 +1,14 @@
 """
 File that contains various utils
 """
-
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
 import cv2
 import numpy as np
 import torch
+import torch.nn as nn
 import yaml  # type: ignore
 from PIL import Image
 
@@ -27,9 +28,19 @@ def get_config(path: str) -> dict[str, Any]:
     Returns:
         dict[str, Any]: Yaml config as python dict
     """
-    with open(path, "rb") as f:
+    with open(f"{get_project_root()}/{path}", "rb") as f:
         config = yaml.safe_load(f)
     return config
+
+
+def print_num_params(model: nn.Module) -> None:
+    """Print number of trainable params in a model
+
+    Args:
+        model (nn.Module): torch model
+    """
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Number of trainable parameters : {pytorch_total_params:,}")
 
 
 def tensor_to_numpy(image_tensor: torch.Tensor) -> np.ndarray:
@@ -74,7 +85,7 @@ def cv2_to_pil(cv2_img: np.ndarray) -> Image:
     return pil_img
 
 
-def jpeg_compress(cv2_img: np.ndarray, quality: int) -> np.ndarray:
+def jpeg_compress_cv2(cv2_img: np.ndarray, quality: int) -> np.ndarray:
     """Injects JPEG compression noise to an input image
 
     Args:
@@ -87,3 +98,19 @@ def jpeg_compress(cv2_img: np.ndarray, quality: int) -> np.ndarray:
     _, jpeg_encode = cv2.imencode(".jpg", cv2_img, [cv2.IMWRITE_JPEG_QUALITY, quality])
     compressed_img = cv2.imdecode(jpeg_encode, cv2.IMREAD_UNCHANGED)
     return compressed_img
+
+
+def jpeg_compress_pil(pil_img: Image, quality: int) -> np.ndarray:
+    """Injects JPEG compression noise to an input image
+
+    Args:
+        pil_img (Image): Input PIL Image obj
+        quality (int): JPEG compression quality [0-100] lower number is more noise
+
+    Returns:
+        np.ndarray: BGR hxwxc np array of image with jpeg noise
+    """
+    output_stream = BytesIO()
+    pil_img.save(output_stream, "JPEG", quality=quality, optimice=True)
+    output_stream.seek(0)
+    return Image.open(output_stream)
