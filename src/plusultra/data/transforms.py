@@ -42,7 +42,7 @@ class JpegCorrupt(ImageTransform):
         Args:
             prob (float, optional): Probability that the input gets compress. Defaults to 1.0.
             corruption_amount (int, optional): Amount of jpeg compression. Defaults to 0.
-                If a tuple(low, high) is passed, quality of range is picked randomly
+                If a tuple(low, high) is passed, quality of range is picked randomly within the range
         """
         self.prob = prob
         self.is_range = True if isinstance(corruption_amount, tuple) else False
@@ -120,7 +120,7 @@ class PadToMultiple(ImageTransform):
         w_multiple = (w // self.multiple + 1) * self.multiple
         canvas = np.zeros((h_multiple, w_multiple, 3))
         canvas[0:h, 0:w, :] = cv2_image
-        return cv2_to_pil(canvas)
+        return cv2_to_pil(canvas.astype(np.uint8))
 
 
 class ResizeImage(ImageTransform):

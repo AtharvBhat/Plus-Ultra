@@ -2,6 +2,7 @@
 -e .
 
 # external requirements
+ipywidgets
 types-PyYAML
 types-Pillow
 matplotlib

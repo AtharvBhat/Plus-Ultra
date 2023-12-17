@@ -1,0 +1,28 @@
+#hyper params
+lr : 5.0e-5 #max LR for OneCycleLR scheduler
+weight_decay : 1.0e-3
+epochs : 20 #number of epochs
+fp_16 : True #mixed precision training
+device : cuda
+wandb : True
+batch_size : 8
+target_size : 512
+train_steps : 1e5
+
+#wandb stuff
+project_name: Plus-Ultra
+run_name: unsplash_unet_base_attention
+log_steps: 10000
+
+# Unet model stuff
+task: SR
+base_channels : 32 # Number of channels in first down sample layer
+# Channels are doubled every downsample block and halved every upsample step
+beta : 1.0 #swish factor
+resblocks : [0, 0, 0, 0] #number of resnet blocks to be used every layer. Same number of resblocks are used at same spacial resolution
+num_groups : 16 # number of groups for group norm. if 0 , use batch norm
+downsample_conv : False # whether to add a 1x1 conv in reset skip connections
+use_pixelshuffle : False # whether downsample blocks use maxpool followed by conv to downsample or a single stride 2 conv
+skip_connection_scale : 1.0 # skip connection in resnet gets scaled by this much
+upscale: True # whether to add one more upscaling block to increase spacial resolution
+use_attention: True # whether to use attention in unet blocks

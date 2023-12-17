@@ -85,10 +85,16 @@ target/
 # Mypy cache
 .mypy_cache/
 
-#unsplash files
+#Dataset files
 data/external/unsplash/photos.tsv000
 data/raw/unsplash/*/*
 data/raw/unsplash/*.parquet
 data/raw/unsplash/*.txt
 data/raw/unsplash/*.json
 data/raw/unsplash/_tmp
+data/raw/flickr2k/*
+data/raw/div2k/*
+
+#model weights and wandb logs
+models/*.pth
+notebooks/wandb/*
